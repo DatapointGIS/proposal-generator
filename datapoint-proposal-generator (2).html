@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Datapoint Proposal Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1a2e4a;
+    --blue: #2460a7;
+    --teal: #2a7f6f;
+    --light-blue: #ddeaf7;
+    --light-teal: #e0f2ee;
+    --bg: #f0f4f8;
+    --white: #ffffff;
+    --text: #1a2e4a;
+    --muted: #6b7f96;
+    --border: #c8d8e8;
+    --accent: #c0202a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  .app-header {
+    background: var(--navy);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 3px solid var(--accent);
+  }
+  .app-title { color: white; }
+  .app-title h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .app-title p { font-size: 12px; color: #8aa5c2; margin-top: 2px; }
+
+  /* ─── LAYOUT ─── */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+
+  /* ─── SECTION CARDS ─── */
+  .card {
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(26,46,74,.06);
+  }
+  .card-header {
+    background: var(--navy);
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-header .num {
+    background: var(--accent);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 13px;
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+  .card-header h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: white; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .card-body { padding: 24px; }
+
+  /* ─── FORM GRID ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px; font-weight: 600; letter-spacing: .8px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .field input {
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 13px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px; color: var(--text);
+    background: #fafcff;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+  }
+  .field input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(36,96,167,.12);
+  }
+
+  /* ─── SOV TABLE ─── */
+  .sov-table { width: 100%; border-collapse: collapse; }
+  .sov-table thead tr {
+    background: var(--navy); color: white;
+  }
+  .sov-table thead th {
+    padding: 10px 14px; text-align: left;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; letter-spacing: .8px; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .sov-table thead th:last-child { text-align: right; }
+  .sov-table tbody tr { border-bottom: 1px solid var(--border); }
+  .sov-table tbody tr:nth-child(even) { background: #f7fafd; }
+  .sov-table td { padding: 10px 14px; font-size: 14px; }
+  .sov-table td:first-child {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; color: var(--blue); font-size: 14px;
+  }
+  .sov-table td:last-child { text-align: right; }
+  .sov-table .amount-input {
+    text-align: right; border: 1.5px solid var(--border);
+    border-radius: 5px; padding: 6px 10px;
+    font-family: 'Barlow', sans-serif; font-size: 14px;
+    color: var(--text); background: #fafcff;
+    width: 130px; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .sov-table .amount-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(36,96,167,.12);
+  }
+  .sov-total-row td {
+    background: var(--navy) !important;
+    color: white !important;
+    font-weight: 700;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    letter-spacing: .5px;
+    border: none !important;
+  }
+  .sov-total-row td:first-child { color: white !important; }
+
+  /* ─── OPTIONAL SECTION ─── */
+  .optional-note {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 16px; font-style: italic;
+  }
+
+  /* ─── GENERATE BUTTON ─── */
+  .btn-generate {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    background: var(--navy);
+    color: white;
+    border: none; border-radius: 8px;
+    padding: 16px 32px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    box-shadow: 0 4px 16px rgba(26,46,74,.2);
+    margin-top: 8px;
+  }
+  .btn-generate:hover { background: var(--blue); transform: translateY(-1px); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate svg { flex-shrink: 0; }
+
+  /* ─── STATUS ─── */
+  #status {
+    text-align: center; font-size: 13px; color: var(--muted);
+    margin-top: 12px; min-height: 20px;
+  }
+
+  @media(max-width:600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .app-header { padding: 16px 20px; }
+    .container { padding: 24px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">
+    <h1>Proposal Generator</h1>
+    <p>UAS Survey &amp; Mapping — Professional Services</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- PROJECT INFO -->
+  <div class="card">
+    <div class="card-header">
+      <span class="num">01</span>
+      <h2>Project Information</h2>
+    </div>
+    <div class="card-body">
+      <div class="grid-2">
+        <div class="field">
+          <label>Prepared For</label>
+          <input type="text" id="preparedFor" placeholder="" />
+        </div>
+        <div class="field">
+          <label>Prepared By</label>
+          <input type="text" id="preparedBy" placeholder="" />
+        </div>
+        <div class="field">
+          <label>Project Site</label>
+          <input type="text" id="projectSite" placeholder="" />
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input type="text" id="propDate" placeholder="" />
+        </div>
+        <div class="field">
+          <label>Proposal Valid</label>
+          <input type="text" id="propValid" placeholder="" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BASE SCOPE -->
+  <div class="card">
+    <div class="card-header">
+      <span class="num">02</span>
+      <h2>Schedule of Values — Base Scope</h2>
+    </div>
+    <div class="card-body">
+      <table class="sov-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th>Amount (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>100</td>
+            <td>Establish UAS Ground Control</td>
+            <td><input class="amount-input sov-input" type="number" id="item100" min="0" step="0.01" /></td>
+          </tr>
+          <tr>
+            <td>101</td>
+            <td>LiDAR Flight &amp; Processing</td>
+            <td><input class="amount-input sov-input" type="number" id="item101" min="0" step="0.01" /></td>
+          </tr>
+          <tr>
+            <td>102</td>
+            <td>Field Crew Topographic Ground Truthing</td>
+            <td><input class="amount-input sov-input" type="number" id="item102" min="0" step="0.01" /></td>
+          </tr>
+          <tr>
+            <td>103</td>
+            <td>Photogrammetry Flight &amp; Processing</td>
+            <td><input class="amount-input sov-input" type="number" id="item103" min="0" step="0.01" /></td>
+          </tr>
+          <tr>
+            <td>104</td>
+            <td>3D Mapping &amp; Delivery</td>
+            <td><input class="amount-input sov-input" type="number" id="item104" min="0" step="0.01" /></td>
+          </tr>
+          <tr>
+            <td>105</td>
+            <td>Project Management</td>
+            <td><input class="amount-input sov-input" type="number" id="item105" min="0" step="0.01" /></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="sov-total-row">
+            <td colspan="2">PROJECT TOTAL</td>
+            <td id="totalDisplay" style="text-align:right;">$27,240.00</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- OPTIONAL SERVICES -->
+  <div class="card">
+    <div class="card-header">
+      <span class="num">03</span>
+      <h2>Additional &amp; Optional Services</h2>
+    </div>
+    <div class="card-body">
+      <p class="optional-note">These items are optional and independent of the base scope. Leave blank to exclude from the PDF.</p>
+      <table class="sov-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th>Amount (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>110(a)</td>
+            <td>Boundary Survey</td>
+            <td><input class="amount-input" type="number" id="item110a" min="0" step="0.01" /></td>
+          </tr>
+          <tr>
+            <td>110(b)</td>
+            <td>ALTA Survey</td>
+            <td><input class="amount-input" type="number" id="item110b" min="0" step="0.01" /></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <button class="btn-generate" onclick="generatePDF()">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="11" x2="12" y2="17"/>
+      <polyline points="9 14 12 17 15 14"/>
+    </svg>
+    Generate &amp; Download PDF
+  </button>
+  <div id="status"></div>
+
+</div>
+
+<script>
+// ── Live total calculation ──
+function calcTotal() {
+  const ids = ['item100','item101','item102','item103','item104','item105'];
+  const total = ids.reduce((s,id) => s + (parseFloat(document.getElementById(id).value)||0), 0);
+  document.getElementById('totalDisplay').textContent = fmt(total);
+  return total;
+}
+function fmt(n) {
+  return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+document.querySelectorAll('.sov-input').forEach(el => el.addEventListener('input', calcTotal));
+calcTotal();
+
+// ── PDF Generation ──
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const status = document.getElementById('status');
+  status.textContent = 'Generating PDF…';
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const W = 612, H = 792;
+  const ML = 54, MR = 54; // left/right margins
+  const contentW = W - ML - MR;
+  const bodySize = 9.5;
+  const lineH = 13.5;
+
+  // ── Colours (matching original)
+  const NAVY   = [26,  46,  74];   // dark header navy
+  const BLUE   = [36,  96,  167];  // section heading blue
+  const TEAL   = [42,  127, 111];  // item title teal/green
+  const LTBLUE = [221, 234, 247];  // light blue band
+  const LTROW  = [240, 246, 252];  // alternate table row
+  const WHITE  = [255, 255, 255];
+  const BLKTEXT= [50,  50,  50];   // body text near-black
+  const MUTED  = [120, 120, 120];
+  const ACCENT = [192, 32,  42];   // red
+  const BORD   = [180, 200, 220];  // border grey-blue
+  const INFOBG = [235, 242, 250];  // info table bg
+
+  const sf = (c) => doc.setFillColor(...c);
+  const st = (c) => doc.setTextColor(...c);
+  const sd = (c) => doc.setDrawColor(...c);
+  const lw = (w) => doc.setLineWidth(w);
+
+  function hline(x1,y1,x2,color,width=0.5) {
+    lw(width); sd(color); doc.line(x1,y1,x2,y1);
+  }
+
+  // Section heading: "1. EXECUTIVE SUMMARY" with blue underline — matching original
+  function sectionHead(y, num, title) {
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    st(BLUE);
+    doc.text(`${num}. ${title.toUpperCase()}`, ML, y);
+    hline(ML, y+3, W-MR, BLUE, 0.8);
+    return y + 18;
+  }
+
+  // Page header strip (pages 2-4): small navy bar with DATAPOINT right-aligned
+  function pageHeader() {
+    sf(NAVY); doc.rect(0,0,W,40,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(16); st(WHITE);
+    doc.text('DATAPOINT', W-MR, 26, {align:'right'});
+  }
+
+  // Footer
+  function pageFooter(pageNum) {
+    hline(ML, H-38, W-MR, BORD, 0.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); st(MUTED);
+    doc.text('Confidential — For Client Use Only', ML, H-24);
+    doc.text(`Page ${pageNum}`, W-MR, H-24, {align:'right'});
+  }
+
+  // Bullet point
+  function bullet(y, text, indent=ML+14, maxW=contentW-14) {
+    sf(BLKTEXT); doc.circle(indent-7, y-2.5, 1.8, 'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+    const lines = doc.splitTextToSize(text, maxW);
+    doc.text(lines, indent, y);
+    return y + lines.length * lineH + 3;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // PAGE 1
+  // ─────────────────────────────────────────────────────────────
+  let y = 0;
+
+  // Full-width navy header
+  sf(NAVY); doc.rect(0, 0, W, 100, 'F');
+
+  // DATAPOINT logo text left
+  doc.setFont('helvetica','bold'); doc.setFontSize(22); st(WHITE);
+  doc.text('DATAPOINT', ML, 38);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); st([150,175,210]);
+  doc.text('ENGINEERING  \u00B7  LAND SURVEYING  \u00B7  GIS  \u00B7  UAS', ML, 50);
+
+  // Company info right-aligned
+  const coLines = [
+    ['bold',   8.5, 'Datapoint Surveying & Mapping II, LLC'],
+    ['bold',   8,   '/D.B.A. Datapoint Engineering'],
+    ['normal', 7.5, 'TBPELS Survey Firm# 10194585'],
+    ['normal', 7.5, 'TBPELS Engineering Firm# 26072'],
+    ['normal', 7.5, '12400 Network Blvd, Ste 130'],
+    ['normal', 7.5, 'San Antonio, TX 78249'],
+    ['normal', 7.5, 'https://datapointsurveying.com/'],
+    ['normal', 7.5, 'info@datapointsurveying.com'],
+    ['normal', 7.5, 'P: 726-777-4240'],
+  ];
+  let cy = 14;
+  coLines.forEach(([weight, size, text]) => {
+    doc.setFont('helvetica', weight); doc.setFontSize(size); st(WHITE);
+    doc.text(text, W-MR, cy, {align:'right'});
+    cy += size + 1.5;
+  });
+
+  y = 112;
+
+  // Proposal title box — light blue with bold title and italic subtitle
+  sf(LTBLUE); doc.rect(ML, y, contentW, 52, 'F');
+  // left navy accent bar
+  sf(NAVY); doc.rect(ML, y, 5, 52, 'F');
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); st(NAVY);
+  doc.text('PROPOSAL FOR PROFESSIONAL SERVICES', ML+14, y+20);
+  doc.setFont('helvetica','italic'); doc.setFontSize(10); st(BLUE);
+  doc.text('UAS Survey & Mapping  |  ' + (document.getElementById('projectSite').value||''), ML+14, y+38);
+  y += 64;
+
+  // Info table — matching original's bordered label/value grid
+  const infoRows = [
+    ['Prepared For:',  document.getElementById('preparedFor').value],
+    ['Prepared By:',   document.getElementById('preparedBy').value],
+    ['Project Site:',  document.getElementById('projectSite').value],
+    ['Date:',          document.getElementById('propDate').value],
+    ['Proposal Valid:', document.getElementById('propValid').value],
+  ];
+  const rowH = 22;
+  const tableH = infoRows.length * rowH + 10;
+  sf(INFOBG); doc.rect(ML, y, contentW, tableH, 'F');
+  sd(BORD); lw(0.5); doc.rect(ML, y, contentW, tableH);
+  // inner horizontal lines
+  infoRows.forEach((_, i) => {
+    if (i > 0) { hline(ML, y + i*rowH + 5, W-MR, BORD, 0.3); }
+  });
+  infoRows.forEach(([label, val], i) => {
+    const ry = y + 10 + i*rowH + 5;
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); st(NAVY);
+    doc.text(label, ML+10, ry);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); st(BLKTEXT);
+    doc.text(val||'', ML+115, ry);
+  });
+  y += tableH + 20;
+
+  // Section 1 — Executive Summary
+  y = sectionHead(y, 1, 'Executive Summary');
+  y += 4;
+
+  const site = document.getElementById('projectSite').value || 'the project';
+  const execParas = [
+    `We are pleased to present this proposal for a comprehensive UAS (Unmanned Aircraft Systems) survey and mapping engagement at the ${site} site, encompassing approximately 220 acres. This project will deliver high-accuracy geospatial data using a fully integrated workflow \u2014 from ground control establishment through LiDAR acquisition, photogrammetric processing, and final 3D deliverable production.`,
+    `Our multi-disciplined approach combines airborne LiDAR, photogrammetry, and field-verified ground truthing to produce survey-grade topographic data. The resulting deliverables will support site planning, engineering design, environmental analysis, and infrastructure decision-making with confidence.`,
+    `The total investment for the core scope of services is ${fmt(calcTotal())}, with optional boundary or ALTA survey services available to supplement the base engagement.`,
+  ];
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  execParas.forEach(p => {
+    const lines = doc.splitTextToSize(p, contentW);
+    doc.text(lines, ML, y);
+    y += lines.length * lineH + 8;
+  });
+  y += 6;
+
+  // Section 2 — Project Understanding
+  y = sectionHead(y, 2, 'Project Understanding & Objectives');
+  y += 4;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  const p2intro = `The ${site} project requires a detailed topographic survey of a 220-acre site. Based on our review of the project requirements, the primary objectives of this engagement are:`;
+  const p2lines = doc.splitTextToSize(p2intro, contentW);
+  doc.text(p2lines, ML, y);
+  y += p2lines.length * lineH + 6;
+
+  const bullets2 = [
+    'Establish a reliable network of UAS ground control points (GCPs) to ensure positional accuracy across the entire survey area.',
+    'Collect dense LiDAR point cloud data to produce bare-earth and surface models with high vertical and horizontal fidelity.',
+    'Perform field crew ground truthing to validate and supplement airborne data in areas of dense vegetation, complex terrain, or obstructed sightlines.',
+    'Execute photogrammetric flights to generate high-resolution orthomosaic imagery and 3D surface models.',
+    'Process, analyze, and deliver finalized 3D mapping products in client-specified formats suitable for engineering and planning workflows.',
+  ];
+  bullets2.forEach(b => { y = bullet(y, b); });
+
+  pageFooter(1);
+
+  // ─────────────────────────────────────────────────────────────
+  // PAGE 2 — Scope of Work
+  // ─────────────────────────────────────────────────────────────
+  doc.addPage();
+  pageHeader();
+  y = 56;
+
+  y = sectionHead(y, 3, 'Scope of Work');
+  y += 6;
+
+  const scopeItems = [
+    ['100', 'Establish UAS Ground Control',
+     'A network of ground control points (GCPs) will be established across the 220-acre site using GPS/GNSS survey-grade equipment. GCPs will be placed to meet accuracy specifications required for LiDAR and photogrammetric processing. Control will be tied to the appropriate horizontal and vertical datum, and checkpoints will be independently verified.'],
+    ['101', 'LiDAR Flight & Processing',
+     'A UAS-mounted LiDAR sensor will be deployed over the project area to collect a dense, calibrated point cloud. Flight planning will account for site geometry, required point density, and safety regulations. Collected data will be processed to produce classified LAS/LAZ point cloud files, bare-earth digital elevation models (DEM), and digital surface models (DSM).'],
+    ['102', 'Field Crew Topographic Ground Truthing',
+     'Field crews will be deployed to conduct independent topographic ground truthing of the LiDAR-derived dataset. Survey measurements will be collected at representative locations across the site, including areas of interest identified during office review. Ground truth data will be used to validate model accuracy and supplement airborne collection where required.'],
+    ['103', 'Photogrammetry Flight & Processing',
+     'A separate photogrammetric UAS flight will be conducted over the project area to collect overlapping high-resolution imagery. Images will be processed using structure-from-motion (SfM) photogrammetry software to produce a calibrated orthomosaic, dense point cloud, and 3D textured mesh. GCPs established in Item 100 will be used as control input for all photogrammetric processing.'],
+    ['104', '3D Mapping & Delivery',
+     'Final deliverables will be compiled, reviewed for quality, and formatted for client delivery. The standard deliverable package includes: classified LAS/LAZ point cloud, bare-earth DEM and DSM (GeoTIFF), high-resolution orthomosaic (GeoTIFF), contour lines at client-specified intervals, and a project summary report with accuracy statistics.'],
+    ['105', 'Project Management',
+     'Dedicated project management will be provided throughout the engagement, including coordination of field and flight operations, quality control review, client communications, progress reporting, and schedule management. A single point of contact will be assigned to manage all aspects of the project from mobilization through final delivery.'],
+  ];
+
+  scopeItems.forEach(([num, title, desc]) => {
+    // Item heading in teal bold
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); st(TEAL);
+    doc.text(`Item ${num} \u2014 ${title}`, ML, y);
+    y += lineH + 1;
+    doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+    const dlines = doc.splitTextToSize(desc, contentW);
+    doc.text(dlines, ML, y);
+    y += dlines.length * lineH + 10;
+  });
+
+  pageFooter(2);
+
+  // ─────────────────────────────────────────────────────────────
+  // PAGE 3 — SOV + Optional Services
+  // ─────────────────────────────────────────────────────────────
+  doc.addPage();
+  pageHeader();
+  y = 56;
+
+  // Section 4 — Schedule of Values
+  y = sectionHead(y, 4, 'Schedule of Values \u2014 Base Scope');
+  y += 4;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  doc.text('The following schedule of values defines the cost breakdown for all base scope services:', ML, y);
+  y += lineH + 8;
+
+  // Table columns: item | description | amount
+  const c0=ML, c1=ML+58, c2=W-MR;
+  const tRowH = 24;
+
+  // Header row
+  sf(NAVY); doc.rect(ML, y, contentW, tRowH, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); st(WHITE);
+  doc.text('ITEM', c0+8, y+15);
+  doc.text('DESCRIPTION', c1+8, y+15);
+  doc.text('AMOUNT', c2, y+15, {align:'right'});
+  y += tRowH;
+
+  const sovIds   = ['item100','item101','item102','item103','item104','item105'];
+  const sovNums  = ['100','101','102','103','104','105'];
+  const sovDescs = [
+    'Establish UAS Ground Control',
+    'LiDAR Flight & Processing',
+    'Field Crew Topographic Ground Truthing',
+    'Photogrammetry Flight & Processing',
+    '3D Mapping & Delivery',
+    'Project Management',
+  ];
+
+  sovIds.forEach((id, i) => {
+    const val = parseFloat(document.getElementById(id).value)||0;
+    sf(i%2===0 ? WHITE : LTROW); doc.rect(ML, y, contentW, tRowH, 'F');
+    sd(BORD); lw(0.3); doc.rect(ML, y, contentW, tRowH);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); st(BLUE);
+    doc.text(sovNums[i], c0+8, y+15);
+    doc.setFont('helvetica','normal'); st(BLKTEXT);
+    doc.text(sovDescs[i], c1+8, y+15);
+    doc.text(fmt(val), c2, y+15, {align:'right'});
+    y += tRowH;
+  });
+
+  // Total row
+  const total = calcTotal();
+  sf(NAVY); doc.rect(ML, y, contentW, tRowH+4, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); st(WHITE);
+  doc.text('PROJECT TOTAL', c1+8, y+17);
+  doc.text(fmt(total), c2, y+17, {align:'right'});
+  y += tRowH+4+6;
+
+  doc.setFont('helvetica','italic'); doc.setFontSize(8); st(MUTED);
+  doc.text('* All amounts are in USD. Project total reflects base scope only and excludes optional services.', ML, y);
+  y += 20;
+
+  // Section 5 — Optional Services
+  y = sectionHead(y, 5, 'Additional & Optional Services');
+  y += 4;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  const optIntroTxt = 'The following services are available as optional additions to the base scope. These items are independent of one another and may be selected individually or in combination based on project needs. Optional services are not included in the base project total.';
+  const optIntroLines = doc.splitTextToSize(optIntroTxt, contentW);
+  doc.text(optIntroLines, ML, y);
+  y += optIntroLines.length * lineH + 10;
+
+  // Optional table
+  sf(NAVY); doc.rect(ML, y, contentW, tRowH, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); st(WHITE);
+  doc.text('ITEM', c0+8, y+15);
+  doc.text('DESCRIPTION', c1+8, y+15);
+  doc.text('AMOUNT', c2, y+15, {align:'right'});
+  y += tRowH;
+
+  const optRows = [
+    ['110(a)', 'Boundary Survey', 'item110a'],
+    ['110(b)', 'ALTA Survey',     'item110b'],
+  ];
+  optRows.forEach(([num, desc, id], i) => {
+    const val = parseFloat(document.getElementById(id).value)||0;
+    sf(i%2===0 ? WHITE : LTROW); doc.rect(ML, y, contentW, tRowH, 'F');
+    sd(BORD); lw(0.3); doc.rect(ML, y, contentW, tRowH);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); st(BLUE);
+    doc.text(num, c0+8, y+15);
+    doc.setFont('helvetica','normal'); st(BLKTEXT);
+    doc.text(desc, c1+8, y+15);
+    doc.text(fmt(val), c2, y+15, {align:'right'});
+    y += tRowH;
+  });
+  y += 12;
+
+  // Optional descriptions in teal bold + normal body text
+  const optDesc = [
+    ['110(a)', 'Boundary Survey',
+     'A full boundary survey of the Vicksburg 220-acre site will be performed in accordance with applicable state standards and professional land surveyor (PLS) requirements. Survey monuments will be set or found and recorded. A plat or survey exhibit will be provided as a deliverable.'],
+    ['110(b)', 'ALTA Survey',
+     'An ALTA/NSPS Land Title Survey will be prepared in conformance with the current Minimum Standard Detail Requirements for ALTA/NSPS Land Title Surveys. The survey will include all required Table A items agreed upon by the parties and will be suitable for use in title insurance and real estate transactions.'],
+  ];
+  optDesc.forEach(([num, name, desc]) => {
+    const prefix = `${num} \u2014 ${name}: `;
+    doc.setFont('helvetica','bold'); doc.setFontSize(bodySize); st(TEAL);
+    const prefixW = doc.getTextWidth(prefix);
+    doc.text(prefix, ML, y);
+    doc.setFont('helvetica','normal'); st(BLKTEXT);
+    // Wrap remainder
+    const remainder = doc.splitTextToSize(desc, contentW - prefixW);
+    doc.text(remainder[0], ML + prefixW, y);
+    if (remainder.length > 1) {
+      y += lineH;
+      doc.text(remainder.slice(1), ML, y);
+      y += (remainder.length - 1) * lineH;
+    }
+    y += lineH + 6;
+  });
+
+  pageFooter(3);
+
+  // ─────────────────────────────────────────────────────────────
+  // PAGE 4 — Assumptions, Terms, Acceptance
+  // ─────────────────────────────────────────────────────────────
+  doc.addPage();
+  pageHeader();
+  y = 56;
+
+  // Section 6 — Assumptions
+  y = sectionHead(y, 6, 'Assumptions & Exclusions');
+  y += 4;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  const assumIntro = 'This proposal is based on the following assumptions. Changes to these conditions may affect project scope, schedule, or cost.';
+  const aiLines = doc.splitTextToSize(assumIntro, contentW);
+  doc.text(aiLines, ML, y);
+  y += aiLines.length * lineH + 6;
+
+  const assumptions = [
+    'Client will provide unrestricted site access for both UAS flight operations and ground crew activities during agreed mobilization windows.',
+    'Airspace authorization, if required, will be obtained in advance of flight operations. Known airspace conflicts may affect scheduling.',
+    'All deliverables will be provided in digital format only unless otherwise specified. Printed products are not included in the base scope.',
+    'Deliverable coordinate systems and datums will be confirmed with the client prior to data collection. Transformation services, if needed, may be billed as additional.',
+    'This proposal does not include utility locating, wetland delineation, environmental assessments, geotechnical services, or legal surveys (unless optional items are selected).',
+    'Scope, schedule, and fees are based on a single mobilization. Additional mobilizations resulting from site access issues or scope changes will be billed accordingly.',
+  ];
+  assumptions.forEach(a => { y = bullet(y, a); });
+  y += 10;
+
+  // Section 7 — Terms
+  y = sectionHead(y, 7, 'Terms & Conditions');
+  y += 4;
+
+  const terms = [
+    'Invoicing will be structured on a milestone basis tied to project deliverables, with payment due within 30 days of invoice date. A signed proposal or purchase order is required to initiate project scheduling.',
+    'This proposal is valid for 30 days from the date of issue. After that period, pricing and availability are subject to review and reconfirmation. Any modifications to scope, schedule, or deliverables must be agreed upon in writing and may result in a change order.',
+    'All work will be performed in accordance with applicable professional standards and regulations. Final deliverables remain the property of the client upon receipt of full payment.',
+  ];
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  terms.forEach(t => {
+    const tlines = doc.splitTextToSize(t, contentW);
+    doc.text(tlines, ML, y);
+    y += tlines.length * lineH + 8;
+  });
+  y += 8;
+
+  // Section 8 — Acceptance
+  y = sectionHead(y, 8, 'Proposal Acceptance');
+  y += 4;
+
+  const acceptTxt = 'To authorize this proposal and initiate project scheduling, please sign below and return a copy to our office. Alternatively, a signed purchase order referencing this proposal number will serve as written authorization.';
+  const accLines = doc.splitTextToSize(acceptTxt, contentW);
+  doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); st(BLKTEXT);
+  doc.text(accLines, ML, y);
+  y += accLines.length * lineH + 36;
+
+  // Signature block
+  const sigColor = [100,120,140];
+  sd(sigColor); lw(0.6);
+  doc.line(ML, y, ML+210, y);
+  doc.line(ML+260, y, ML+460, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); st(MUTED);
+  doc.text('Authorized Signature', ML, y+11);
+  doc.text('Date', ML+260, y+11);
+  y += 40;
+  doc.line(ML, y, ML+210, y);
+  doc.line(ML+260, y, ML+460, y);
+  doc.text('Printed Name & Title', ML, y+11);
+  doc.text('Company / Organization', ML+260, y+11);
+
+  pageFooter(4);
+
+  // Save
+  const siteName = (document.getElementById('projectSite').value||'Proposal').replace(/[^a-z0-9]/gi,'_');
+  doc.save(`Proposal_${siteName}.pdf`);
+  status.textContent = '\u2713 PDF downloaded successfully!';
+  setTimeout(() => status.textContent = '', 4000);
+}
+</script>
+</body>
+</html>
